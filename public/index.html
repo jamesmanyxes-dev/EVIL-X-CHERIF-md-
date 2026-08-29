@@ -1,0 +1,105 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width,initial-scale=1">
+  <meta name="theme-color" content="#050807">
+  <title>EVIL BOT — WhatsApp Connect</title>
+  <link rel="stylesheet" href="/style.css">
+</head>
+<body>
+  <div class="storm">
+    <div class="cloud cloud-a"></div>
+    <div class="cloud cloud-b"></div>
+    <div class="cloud cloud-c"></div>
+    <div class="rain rain-a"></div>
+    <div class="rain rain-b"></div>
+    <div class="lightning lightning-green"></div>
+    <div class="lightning lightning-red"></div>
+    <div class="city city-left"></div>
+    <div class="city city-right"></div>
+  </div>
+
+  <header class="topbar">
+    <a class="brand" href="/">
+      <span class="brand-mark">◈</span>
+      <span>
+        <strong><i>EVIL</i><b>BOT</b></strong>
+        <small>WHATSAPP CONNECT</small>
+      </span>
+    </a>
+
+    <nav>
+      <a class="active" href="#connect">HOME</a>
+      <a href="#features">FEATURES</a>
+      <a href="#status">STATUS</a>
+      <a href="#about">ABOUT</a>
+    </nav>
+
+    <div class="online-pill"><span></span>SYSTEM ONLINE</div>
+  </header>
+
+  <main>
+    <section class="hero" id="connect">
+      <div class="eyebrow">CONNECT YOUR</div>
+      <h1><span>WHAT</span><em>SAPP</em></h1>
+      <div class="powered"><i></i> POWERED BY EVIL TECHNOLOGY <i></i></div>
+
+      <section class="panel">
+        <div class="panel-head">
+          <div class="wa-icon">◔</div>
+          <div>
+            <h2>WHATSAPP PAIRING</h2>
+            <p>Enter your phone number to get a real pairing code</p>
+          </div>
+        </div>
+
+        <form method="post" action="/pair" class="pair-form">
+          <label for="phone">PHONE NUMBER</label>
+          <div class="phone-row">
+            <div class="country"><span>🇳🇬</span> +234 <span class="chev">⌄</span></div>
+            <input id="phone" name="phone" inputmode="numeric" autocomplete="tel"
+                   pattern="[0-9]{7,15}" maxlength="15"
+                   placeholder="8012345678" required>
+          </div>
+          <p class="hint">Enter your active WhatsApp number without the + sign.</p>
+
+          <button type="submit" class="pair-btn"><span>ϟ</span> GET PAIRING CODE</button>
+        </form>
+
+        {{RESULT}}
+
+        <div class="divider"></div>
+
+        <div class="server-row" id="status">
+          <div class="server-stat">
+            <span class="stat-icon green">☁</span>
+            <div><small>BOT SERVER STATUS</small><strong>{{STATUS}}</strong></div>
+          </div>
+          <div class="server-stat">
+            <span class="stat-icon">◷</span>
+            <div><small>UPTIME</small><strong>{{UPTIME}}</strong></div>
+          </div>
+        </div>
+      </section>
+
+      <section class="feature-strip" id="features">
+        <article><b>01</b><strong>REAL PAIRING</strong><span>Codes come from the running WhatsApp session.</span></article>
+        <article><b>02</b><strong>SECURE BRIDGE</strong><span>Your bot credentials stay on the server.</span></article>
+        <article><b>03</b><strong>FAST CONNECT</strong><span>Simple phone-number pairing with no QR required.</span></article>
+      </section>
+
+      <section class="about" id="about">
+        <span>HOW IT WORKS</span>
+        <h3>Enter your number → get the code → link your device.</h3>
+        <p>Open WhatsApp → Linked Devices → Link a device → Link with phone number.</p>
+      </section>
+    </section>
+  </main>
+
+  <footer>
+    <span>© 2026 <b>EVIL BOT</b>. ALL RIGHTS RESERVED.</span>
+    <span class="footer-dots">● ◉ ◇</span>
+  </footer>
+</body>
+</html>
