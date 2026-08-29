@@ -1,0 +1,151 @@
+EVIL BOT — BOT SERVER PATCH
+============================
+
+Your uploaded bot already has the real pairing call:
+
+  sock.requestPairingCode(pairPhone, 'JAMESDEV')
+
+and an existing HTTP health server in index.js.
+
+Do NOT expose your panel password/token to the website.
+
+1) Add this environment variable on the BOT SERVER:
+
+PAIR_API_SECRET=make-a-long-random-secret-here
+
+2) Replace the existing health-server callback inside startPingLoop()
+   (the http.createServer((req,res)=>{ ... }) block) with the version below.
+
+IMPORTANT:
+- Keep your existing startPingLoop() function.
+- This uses Node's built-in http module, so no Express package is required.
+- The website sends POST /api/pair with JSON: {"phone":"234..."}.
+- The endpoint waits for the REAL Baileys pairing code and returns it.
+
+CODE:
+
+  http.createServer(async (req, res) => {
+    const origin = process.env.WEBSITE_URL || '*';
+
+    res.setHeader('Access-Control-Allow-Origin', origin);
+    res.setHeader('Access-Control-Allow-Methods', 'GET, POST, OPTIONS');
+    res.setHeader('Access-Control-Allow-Headers', 'Content-Type, x-pair-secret');
+
+    if (req.method === 'OPTIONS') {
+      res.writeHead(204);
+      return res.end();
+    }
+
+    if (req.method === 'GET' && req.url === '/health') {
+      const uptime = formatUptime(Date.now() - global.botStartTime);
+      res.writeHead(200, { 'Content-Type': 'application/json' });
+      return res.end(JSON.stringify({
+        status: 'alive',
+        uptime,
+        sessions: activeSockets.size
+      }));
+    }
+
+    if (req.method === 'POST' && req.url === '/api/pair') {
+      if (req.headers['x-pair-secret'] !== process.env.PAIR_API_SECRET) {
+        res.writeHead(401, { 'Content-Type': 'application/json' });
+        return res.end(JSON.stringify({ error: 'Unauthorized' }));
+      }
+
+      let raw = '';
+      req.on('data', chunk => {
+        raw += chunk;
+        if (raw.length > 4096) req.destroy();
+      });
+
+      req.on('end', async () => {
+        try {
+          const body = JSON.parse(raw || '{}');
+          const pairPhone = String(body.phone || '').replace(/\D/g, '');
+
+          if (!/^\d{7,15}$/.test(pairPhone)) {
+            res.writeHead(400, { 'Content-Type': 'application/json' });
+            return res.end(JSON.stringify({ error: 'Invalid phone number' }));
+          }
+
+          const ownerTgId = settings.OWNER_TELEGRAM_ID || 'web';
+          const sessionId = `web_${ownerTgId}_${pairPhone}`;
+
+          if (activeSockets.has(sessionId)) {
+            res.writeHead(409, { 'Content-Type': 'application/json' });
+            return res.end(JSON.stringify({
+              error: 'A session for this number is already active.'
+            }));
+          }
+
+          let finished = false;
+
+          const finish = (status, payload) => {
+            if (finished) return;
+            finished = true;
+            res.writeHead(status, { 'Content-Type': 'application/json' });
+            res.end(JSON.stringify(payload));
+          };
+
+          const timer = setTimeout(() => {
+            finish(504, { error: 'Pairing code request timed out.' });
+          }, 30000);
+
+          try {
+            await startWhatsApp(
+              sessionId,
+              null,
+              pairPhone,
+              null,
+              async (code) => {
+                clearTimeout(timer);
+                finish(200, {
+                  code,
+                  uptime: formatUptime(Date.now() - global.botStartTime)
+                });
+              }
+            );
+          } catch (e) {
+            clearTimeout(timer);
+            finish(500, { error: e.message });
+          }
+        } catch (e) {
+          res.writeHead(400, { 'Content-Type': 'application/json' });
+          res.end(JSON.stringify({ error: 'Invalid JSON request' }));
+        }
+      });
+
+      return;
+    }
+
+    const uptime = formatUptime(Date.now() - global.botStartTime);
+    res.writeHead(200, { 'Content-Type': 'application/json' });
+    res.end(JSON.stringify({ status: 'alive', uptime, sessions: activeSockets.size }));
+  }).listen(process.env.PORT || 3001, () => {
+    logSuccess('PING', `Health/API server :${process.env.PORT || 3001}`);
+  });
+
+3) On Render create the website as a Web Service.
+
+Environment variables:
+
+BOT_API_URL=https://YOUR-BOT-DOMAIN.example.com/api/pair
+BOT_API_SECRET=THE-SAME-RANDOM-SECRET
+
+4) On your bot panel/server set:
+
+PAIR_API_SECRET=THE-SAME-RANDOM-SECRET
+WEBSITE_URL=https://YOUR-RENDER-SITE.onrender.com
+
+5) The frontend contains NO JavaScript.
+The normal HTML form POSTs to /pair. The Render Node server proxies
+that request to your bot API.
+
+6) Your existing Baileys call remains responsible for the real code.
+Do not replace requestPairingCode() with a random code generator.
+
+Security:
+- Use a long random PAIR_API_SECRET.
+- Do not put PAIR_API_SECRET in index.html or CSS.
+- Do not put Telegram/GitHub tokens in the website.
+- Consider adding rate limiting before making the pairing endpoint public.
